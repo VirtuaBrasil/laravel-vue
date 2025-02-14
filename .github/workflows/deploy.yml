@@ -32,6 +32,22 @@ jobs:
       - name: Composer Install
         run: composer install
 
+      - name: Criar arquivo .env com Secrets
+        run: |
+          echo "APP_ENV=production" > .env
+          echo "APP_KEY=base64:/m9t7BE3rPosKWL7BYCZHGzmby4qQyCXuY9NTsQs4G0=" >> .env
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=virtuabrasil.com" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=valemkt_site" >> .env
+          echo "DB_USERNAME=valemkt_site" >> .env
+          echo "DB_PASSWORD=.vz6pcZm~xX^" >> .env
+
+      - name: Limpar Cache
+        run: |
+          php artisan config:clear
+          php artisan config:cache
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
@@ -39,4 +55,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./public/
-          server-dir: /home/${{ secrets.FTP_USERNAME }}/public_html/
+          server-dir: /public_html/
