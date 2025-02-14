@@ -30,7 +30,7 @@ jobs:
           npm run build
 
       - name: Composer Install
-        run: composer install --no-dev --prefer-dist --optimize-autoloader
+        run: composer install
 
       - name: Rodar Migrations
         run: php artisan migrate --force
