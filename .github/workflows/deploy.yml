@@ -17,7 +17,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          extensions: mbstring, xml, sqlite
+          extensions: mbstring, xml, sqlite, curl
 
       - name: Setup Node
         uses: actions/setup-node@v3
@@ -42,11 +42,17 @@ jobs:
           echo "DB_DATABASE=valemkt_site" >> .env
           echo "DB_USERNAME=valemkt_site" >> .env
           echo "DB_PASSWORD=.vz6pcZm~xX^" >> .env
+          echo "APP_DEBUG=true" >> .env
 
-      - name: Limpar Cache
+      - name: Limpar Cache local
         run: |
           php artisan config:clear
           php artisan config:cache
+
+      - name: Copiar index.php e .htaccess da pasta public para a raiz
+        run: |
+          cp public/index.php .
+          cp public/.htaccess .
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
@@ -56,3 +62,13 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
           server-dir: /public_html/
+          exclude: |
+            .env
+            node_modules/
+            .git/
+            .github/
+          dangerous-clean-slate: false
+
+      - name: Clear Cache on Server via HTTP Request
+        run: |
+          curl -sS https://valemkt.com.br/clear-cache.php
