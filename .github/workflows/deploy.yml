@@ -71,4 +71,4 @@ jobs:
 
       - name: Clear Cache on Server via HTTP Request
         run: |
-          curl -sS https://valemkt.com.br/clear-cache.php
+          curl -sS https://valemkt.com/clear-cache.php
