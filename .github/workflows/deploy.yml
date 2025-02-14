@@ -68,6 +68,7 @@ jobs:
             .env
             .git/**
             .github/**
+            .node_modules/**
           dangerous-clean-slate: false
 
       - name: Clear Cache on Server via HTTP Request
