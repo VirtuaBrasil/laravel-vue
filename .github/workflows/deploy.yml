@@ -53,6 +53,9 @@ jobs:
         run: |
           cp public/index.php .
           cp public/.htaccess .
+          sed -i 's|../vendor/autoload.php|vendor/autoload.php|g' index.php
+          sed -i 's|../bootstrap/app.php|bootstrap/app.php|g' index.php
+          sed -i 's|../storage/framework/maintenance.php|storage/framework/maintenance.php|g' index.php
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
