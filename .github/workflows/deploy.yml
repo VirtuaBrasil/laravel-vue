@@ -32,9 +32,6 @@ jobs:
       - name: Composer Install
         run: composer install
 
-      - name: Rodar Migrations
-        run: php artisan migrate --force
-
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
