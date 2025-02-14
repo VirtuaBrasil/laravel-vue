@@ -51,8 +51,7 @@ jobs:
 
       - name: Copiar index.php e .htaccess da pasta public para a raiz
         run: |
-          cp public/index.php .
-          cp public/.htaccess .
+          cp -r public/* .
           sed -i 's|../vendor/autoload.php|vendor/autoload.php|g' index.php
           sed -i 's|../bootstrap/app.php|bootstrap/app.php|g' index.php
           sed -i 's|../storage/framework/maintenance.php|storage/framework/maintenance.php|g' index.php
