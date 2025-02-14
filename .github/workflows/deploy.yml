@@ -27,7 +27,7 @@ jobs:
       - name: Instalar dependências do Node e build do front-end
         run: |
           npm install
-          npm run production
+          npm run build
 
       - name: Composer Install
         run: composer install --no-dev --prefer-dist --optimize-autoloader
