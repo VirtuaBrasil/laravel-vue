@@ -64,9 +64,9 @@ jobs:
           server-dir: /public_html/
           exclude: |
             .env
-            node_modules/
-            .git/
-            .github/
+            node_modules
+            .git
+            .github
           dangerous-clean-slate: false
 
       - name: Clear Cache on Server via HTTP Request
