@@ -66,7 +66,6 @@ jobs:
           server-dir: /public_html/
           exclude: |
             .env
-            node_modules/**
             .git/**
             .github/**
           dangerous-clean-slate: false
