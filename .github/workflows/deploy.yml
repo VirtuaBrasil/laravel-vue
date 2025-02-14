@@ -30,7 +30,7 @@ jobs:
           npm run build
 
       - name: Composer Install
-        run: composer install
+        run: composer install --no-dev --optimize-autoloader
 
       - name: Criar arquivo .env com Secrets
         run: |
@@ -48,6 +48,8 @@ jobs:
         run: |
           php artisan config:clear
           php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
 
       - name: Copiar index.php e .htaccess da pasta public para a raiz
         run: |
@@ -68,7 +70,14 @@ jobs:
             .env
             .git/**
             .github/**
-            .node_modules/**
+            node_modules/**
+            tests/**
+            .gitignore
+            .editorconfig
+            package.json
+            package-lock.json
+            vite.config.js
+            webpack.mix.js
           dangerous-clean-slate: false
 
       - name: Clear Cache on Server via HTTP Request
