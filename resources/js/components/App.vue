@@ -18,7 +18,7 @@
       </div>
 
       <div class="flex space-x-4 overflow-auto" @dragover.prevent>
-        <div v-for="(column, index) in columns" :key="index" class="w-72 bg-gray-200 rounded-lg p-4" @drop="drop($event, column)" @dragover.prevent>
+        <div v-for="(column, index) in columns" :key="index" class="w-72 bg-gray-200 rounded-lg p-4" @drop="drop(column)" @dragover.prevent>
           <h3 class="text-lg font-bold mb-3">{{ column.title }}</h3>
           <div class="space-y-3">
             <div v-for="(task, tIndex) in column.tasks" :key="task.id" draggable="true" @dragstart="drag(task, column, tIndex)" class="bg-white p-3 rounded-md shadow-sm border border-gray-300">
@@ -52,57 +52,145 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      draggedTask: null,
-      sourceColumn: null,
-      sourceIndex: null,
-      columns: [
-        { title: 'To Do', tasks: [] },
-        { title: 'In Progress', tasks: [] },
-        { title: 'Completed', tasks: [] }
-      ],
-      modal: { show: false, type: '', column: null, index: null, task: {}, title: '' }
-    };
-  },
-  methods: {
-    drag(task, column, index) {
-      this.draggedTask = task;
-      this.sourceColumn = column;
-      this.sourceIndex = index;
-    },
-    drop(event, targetColumn) {
-      if (this.draggedTask && this.sourceColumn !== targetColumn) {
-        this.sourceColumn.tasks.splice(this.sourceIndex, 1);
-        targetColumn.tasks.push(this.draggedTask);
-        this.draggedTask = null;
-        this.sourceColumn = null;
-        this.sourceIndex = null;
-      }
-    },
-    openModal(type, column = null, index = null) {
-      this.modal = {
-        show: true,
-        type,
-        column,
-        index,
-        task: { ...column?.tasks[index] } || {},
-        title: type === 'add' ? 'Add Task' : type === 'edit' ? 'Edit Task' : 'Delete Task'
-      };
-    },
-    confirmAction() {
-      const { type, column, index, task } = this.modal;
-      if (type === 'add') {
-        this.columns[0].tasks.push({ id: Date.now(), ...task });
-      } else if (type === 'edit') {
-        Object.assign(column.tasks[index], task);
-      } else if (type === 'delete') {
-        column.tasks.splice(index, 1);
-      }
-      this.modal.show = false;
-    }
+<script setup>
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
+const columns = ref([
+  { title: 'To Do', status: 'todo', tasks: [] },
+  { title: 'In Progress', status: 'in_progress', tasks: [] },
+  { title: 'Completed', status: 'completed', tasks: [] }
+]);
+
+const modal = ref({ show: false, type: '', column: null, index: null, task: {}, title: '' });
+const draggedTask = ref(null);
+const sourceColumn = ref(null);
+const sourceIndex = ref(null);
+
+// 🟡 1. Obter todas as tarefas
+async function getTasks() {
+  try {
+    const { data } = await axios.get('/api/tasks');
+    columns.value = [
+      { title: 'To Do', status: 'todo', tasks: data.filter(task => task.status === 'todo') },
+      { title: 'In Progress', status: 'in_progress', tasks: data.filter(task => task.status === 'in_progress') },
+      { title: 'Completed', status: 'completed', tasks: data.filter(task => task.status === 'completed') }
+    ];
+  } catch (error) {
+    console.error('Erro ao obter tarefas:', error);
   }
-};
+}
+
+// 🟢 2. Criar nova tarefa
+async function createTask(task) {
+  try {
+    // Adiciona o status 'todo' à tarefa antes de enviá-la
+    const newTask = { ...task, status: 'todo' };
+    const { data } = await axios.post('/api/tasks', newTask);
+    columns.value[0].tasks.unshift(data); // Adiciona automaticamente à coluna 'To Do'
+  } catch (error) {
+    alert('Erro ao criar tarefa: ' + error.response?.data?.message || error.message);
+  }
+}
+
+// 🟠 3. Editar tarefa
+async function editTask(task) {
+  try {
+    const { data } = await axios.put(`/api/tasks/${task.id}`, task);
+    const column = columns.value.find(col => col.status === data.status);
+    const index = column.tasks.findIndex(t => t.id === data.id);
+    column.tasks[index] = data;
+  } catch (error) {
+    console.error('Erro ao editar tarefa:', error);
+  }
+}
+
+// 🔴 4. Deletar tarefa
+async function deleteTask(id) {
+  try {
+    await axios.delete(`/api/tasks/${id}`);
+    columns.value.forEach(col => {
+      col.tasks = col.tasks.filter(task => task.id !== id);
+    });
+  } catch (error) {
+    console.error('Erro ao deletar tarefa:', error);
+  }
+}
+
+// 🟣 5. Mover tarefa (Drag-and-Drop)
+async function moveTask(task, targetColumn) {
+  try {
+    const { data } = await axios.put(`/api/tasks/${task.id}`, { status: targetColumn.status });
+    getTasks(); // Atualiza colunas com dados do backend
+  } catch (error) {
+    console.error('Erro ao mover tarefa:', error);
+  }
+}
+
+// 📝 Modal de CRUD
+function openModal(type, column = null, index = null) {
+  modal.value = {
+    show: true,
+    type,
+    column,
+    index,
+    task: { ...column?.tasks[index] } || {},
+    title: type === 'add' ? 'Add Task' : type === 'edit' ? 'Edit Task' : 'Delete Task'
+  };
+}
+
+async function confirmAction() {
+  const { type, column, index, task } = modal.value;
+  if (type === 'add') {
+    await createTask(task);
+  } else if (type === 'edit') {
+    await editTask(task);
+  } else if (type === 'delete') {
+    await deleteTask(task.id);
+  }
+  modal.value.show = false;
+  getTasks();
+}
+
+// Drag and Drop
+function drag(task, column, index) {
+  draggedTask.value = task;
+  sourceColumn.value = column;
+  sourceIndex.value = index;
+}
+
+async function drop(targetColumn) {
+  console.log('Target Column:', targetColumn);
+  if (draggedTask.value && sourceColumn.value !== targetColumn) {
+    sourceColumn.value.tasks.splice(sourceIndex.value, 1);
+    
+    if (targetColumn && targetColumn.tasks) {
+      targetColumn.tasks.push(draggedTask.value);
+      await moveTask(draggedTask.value, targetColumn);
+    } else {
+      console.error('Target column is undefined or does not have tasks');
+    }
+    
+    draggedTask.value = null;
+    sourceColumn.value = null;
+    sourceIndex.value = null;
+  }
+}
+
+onMounted(() => {
+  getTasks();
+});
 </script>
+
+
+<style scoped>
+h1 {
+  margin-bottom: 1rem;
+}
+.new-task {
+  margin-bottom: 1rem;
+}
+s {
+  color: #888;
+}
+</style>
