@@ -23,7 +23,7 @@
 
     <footer class="bg-white shadow mt-8">
         <div class="container mx-auto px-4 py-4 text-center">
-            <p>&copy; {{ date('Y') }} Meu Projeto Incrível. Todos os direitos reservados.</p>
+            <p>&copy; {{ date('Y') }} Meu Projeto Incrível. Todos os direitos reservados!</p>
         </div>
     </footer>
 </body>
