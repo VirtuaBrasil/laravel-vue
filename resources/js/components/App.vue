@@ -5,8 +5,6 @@
       <h2 class="text-lg font-bold text-gray-800 mb-4">Task Manager</h2>
       <ul class="space-y-2">
         <li><a href="#" class="block px-3 py-2 text-indigo-600 font-semibold bg-indigo-100 rounded-md">Dashboard</a></li>
-        <li><a href="#" class="block px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">My Tasks</a></li>
-        <li><a href="#" class="block px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Settings</a></li>
       </ul>
     </aside>
 
