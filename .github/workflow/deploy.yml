@@ -1,0 +1,75 @@
+name: Deploy via FTP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, sqlite, curl
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Instalar dependências do Node e build do front-end
+        run: |
+          npm install
+          npm run build
+
+      - name: Composer Install
+        run: composer install
+
+      - name: Criar arquivo .env com Secrets
+        run: |
+          echo "APP_ENV=production" > .env
+          echo "APP_KEY=base64:/m9t7BE3rPosKWL7BYCZHGzmby4qQyCXuY9NTsQs4G0=" >> .env
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=virtuabrasil.com" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=valemkt_site" >> .env
+          echo "DB_USERNAME=valemkt_site" >> .env
+          echo "DB_PASSWORD=.vz6pcZm~xX^" >> .env
+          echo "APP_DEBUG=true" >> .env
+
+      - name: Limpar Cache local
+        run: |
+          php artisan config:clear
+          php artisan config:cache
+
+      - name: Copiar index.php e .htaccess da pasta public para a raiz
+        run: |
+          cp -r public/* .
+          sed -i 's|../vendor/autoload.php|vendor/autoload.php|g' index.php
+          sed -i 's|../bootstrap/app.php|bootstrap/app.php|g' index.php
+          sed -i 's|../storage/framework/maintenance.php|storage/framework/maintenance.php|g' index.php
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /public_html/
+          exclude: |
+            .env
+            .git/**
+            .github/**
+          dangerous-clean-slate: false
+
+      - name: Clear Cache on Server via HTTP Request
+        run: |
+          curl -sS https://valemkt.com/clear-cache.php
